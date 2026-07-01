@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+import numpy as np
+
 
 class Node:
     def __init__(self, id: int, x: float):
@@ -25,9 +27,16 @@ class Element:
         self.id = id
         self.nodes = nodes
         self.props = props
+        self.length = abs(nodes[1].x - nodes[0].x)
 
     def __repr__(self):
         return f"Element(id={self.id})"
+
+    def calculate_axial_stiffness_matrix(self):
+        EA, L, kl = self.props.EA, self.length, self.props.kl
+        return EA / L * np.array([[1, -1], [-1, 1]]) + kl * L / 6 * np.array(
+            [[2, 1], [1, 2]]
+        )
 
 
 class Mesh:
