@@ -17,10 +17,10 @@ class InputReader:
     def parse(self):
         num_segments = int(self.lines[0])
         initial_node_info = self.get_node_info(self.lines[1])
-        elements_info = []
+        segments_info = []
         for i in range(2, 2 * num_segments + 2, 2):
             element_splitted_line = self.lines[i].split()
-            elements_info.append(
+            segments_info.append(
                 {
                     "L": float(element_splitted_line[0]),
                     "num_elements": int(element_splitted_line[1]),
@@ -38,7 +38,7 @@ class InputReader:
             "num_segments": num_segments,
             "initial_node_info": initial_node_info,
             "final_node_info": final_node_info,
-            "elements_info": elements_info,
+            "segments_info": segments_info,
             "num_buckling_modes": num_buckling_modes,
         }
 
