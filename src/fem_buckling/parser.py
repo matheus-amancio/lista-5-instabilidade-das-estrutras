@@ -1,18 +1,66 @@
 from pathlib import Path
 
-
-def read_input_file(path: Path):
-    if not path.is_file():
-        raise FileNotFoundError(f"File not found: {path}")
-    with open(path, "r", encoding="utf-8") as f:
-        return f.read()
+from src.fem_buckling.boundary_condition import BoundaryCondition
 
 
-def parse_input(path: Path):
-    content = read_input_file(path)
-    lines = content.splitlines()
-    print(lines)
+class InputReader:
+    def __init__(self):
+        self.lines: list[str] = []
 
+    def read(self, path: Path):
+        if not path.is_file():
+            raise FileNotFoundError(f"File not found: {path}")
+        with open(path, "r", encoding="utf-8") as f:
+            content = f.read()
+            self.lines = content.splitlines()
 
-if __name__ == "__main__":
-    parse_input(Path(__file__).parent.parent / "examples/ex01.ie")
+    def parse(self):
+        num_segments = int(self.lines[0])
+        initial_node_info = self.get_node_info(self.lines[1])
+        elements_info = []
+        for i in range(2, 2 * num_segments + 2, 2):
+            element_splitted_line = self.lines[i].split()
+            elements_info.append(
+                {
+                    "L": float(element_splitted_line[0]),
+                    "num_elements": int(element_splitted_line[1]),
+                    "EA": float(element_splitted_line[2]),
+                    "EI": float(element_splitted_line[3]),
+                    "kl": float(element_splitted_line[4]),
+                    "kt": float(element_splitted_line[5]),
+                    "kr": float(element_splitted_line[6]),
+                    "p": float(element_splitted_line[7]),
+                }
+            )
+        final_node_info = self.get_node_info(self.lines[-2])
+        num_buckling_modes = int(self.lines[-1])
+        return {
+            "num_segments": num_segments,
+            "initial_node_info": initial_node_info,
+            "final_node_info": final_node_info,
+            "elements_info": elements_info,
+            "num_buckling_modes": num_buckling_modes,
+        }
+
+    def get_node_info(self, line: list[str]) -> dict:
+        splitted_line = line.split()
+        node_info = dict()
+        node_info["bc_axial"] = int(splitted_line[0])
+        aux = 1
+        if node_info["bc_axial"] == BoundaryCondition.FREE.value:
+            node_info["KL"] = float(splitted_line[1])
+            node_info["P"] = float(splitted_line[2])
+            aux = 3
+
+        node_info["bc_transverse"] = int(splitted_line[aux])
+        aux += 1
+        if node_info["bc_transverse"] == BoundaryCondition.FREE.value:
+            node_info["KT"] = float(splitted_line[aux])
+            aux += 1
+
+        node_info["bc_rotational"] = int(splitted_line[aux])
+        aux += 1
+        if node_info["bc_rotational"] == BoundaryCondition.FREE.value:
+            node_info["KR"] = float(splitted_line[aux])
+
+        return node_info
