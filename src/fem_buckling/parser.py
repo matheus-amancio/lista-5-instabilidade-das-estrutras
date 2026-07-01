@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from src.fem_buckling.boundary_condition import BoundaryCondition
+from src.fem_buckling.boundary_condition import BoundaryConditionType
 
 
 class InputReader:
@@ -47,20 +47,20 @@ class InputReader:
         node_info = dict()
         node_info["bc_axial"] = int(splitted_line[0])
         aux = 1
-        if node_info["bc_axial"] == BoundaryCondition.FREE.value:
+        if node_info["bc_axial"] == BoundaryConditionType.FREE.value:
             node_info["KL"] = float(splitted_line[1])
             node_info["P"] = float(splitted_line[2])
             aux = 3
 
         node_info["bc_transverse"] = int(splitted_line[aux])
         aux += 1
-        if node_info["bc_transverse"] == BoundaryCondition.FREE.value:
+        if node_info["bc_transverse"] == BoundaryConditionType.FREE.value:
             node_info["KT"] = float(splitted_line[aux])
             aux += 1
 
         node_info["bc_rotational"] = int(splitted_line[aux])
         aux += 1
-        if node_info["bc_rotational"] == BoundaryCondition.FREE.value:
+        if node_info["bc_rotational"] == BoundaryConditionType.FREE.value:
             node_info["KR"] = float(splitted_line[aux])
 
         return node_info
