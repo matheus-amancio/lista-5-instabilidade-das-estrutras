@@ -67,11 +67,12 @@ class StaticAssembler:
 
         for element_load in self.element_loads:
             node_1, node_2 = element_load.element.nodes
+            element_length = element_load.element.length
             dofs = [
                 self.node_dofs_mapping[node_1.id],
                 self.node_dofs_mapping[node_2.id],
             ]
-            f[np.ix_(dofs)] += element_load.force / 2
+            f[np.ix_(dofs)] += element_load.force * element_length / 2
 
         return f
 
