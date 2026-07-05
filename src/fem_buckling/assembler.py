@@ -18,7 +18,7 @@ class PartitionedSystem:
     constrained_dofs: np.ndarray
 
 
-class StaticAssembler:
+class AxialAssembler:
     def __init__(self, model: Model):
         self.model = model
         self.nodes = model.mesh.nodes
