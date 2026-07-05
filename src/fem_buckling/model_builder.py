@@ -43,14 +43,19 @@ class ModelBuilder:
         mesh.reset_counters()
 
         segments_info = parsed_data["segments_info"]
+        extreme_segment_nodes = []
         for i, seg_info in enumerate(segments_info):
             x0 = 0.0 if i == 0 else mesh.nodes[-1].x
             node_coords = generate_node_coordinates(
                 seg_info, x0=x0, offset=1 if i > 0 else 0
             )
+            print(f"{node_coords=}")
             segment_nodes = []
             for x in node_coords:
                 segment_nodes.append(mesh.add_node(x))
+            if i == 0:
+                extreme_segment_nodes.append(segment_nodes[0])
+            extreme_segment_nodes.append(segment_nodes[-1])
 
             segment_props = ElementProperties(
                 EA=seg_info["EA"],
@@ -66,35 +71,22 @@ class ModelBuilder:
                     props=segment_props,
                 )
 
-        initial_node_info = parsed_data["initial_node_info"]
-        final_node_info = parsed_data["final_node_info"]
-        initial_node_bc = BoundaryCondition(
-            node=mesh.nodes[0],
-            bc_axial=initial_node_info["bc_axial"],
-            bc_transverse=initial_node_info["bc_transverse"],
-            bc_rotational=initial_node_info["bc_rotational"],
-        )
-        final_node_bc = BoundaryCondition(
-            node=mesh.nodes[-1],
-            bc_axial=final_node_info["bc_axial"],
-            bc_transverse=final_node_info["bc_transverse"],
-            bc_rotational=final_node_info["bc_rotational"],
-        )
-        boundary_conditions = [initial_node_bc, final_node_bc]
-
+        boundary_conditions = []
         nodal_loads = []
-        if initial_node_info.get("P"):
-            initial_node_load = NodalLoad(
-                node=mesh.nodes[0], force=initial_node_info["P"]
-            )
-            nodal_loads.append(initial_node_load)
-        if final_node_info.get("P"):
-            final_node_load = NodalLoad(node=mesh.nodes[-1], force=final_node_info["P"])
-            nodal_loads.append(final_node_load)
-
         spring_supports = []
-        spring_supports.extend(self.create_springs(initial_node_info, mesh.nodes[0]))
-        spring_supports.extend(self.create_springs(final_node_info, mesh.nodes[-1]))
+        for i, node in enumerate(extreme_segment_nodes):
+            node_info = parsed_data["nodes_info"][i]
+            node_bc = BoundaryCondition(
+                node=node,
+                bc_axial=node_info["bc_axial"],
+                bc_transverse=node_info["bc_transverse"],
+                bc_rotational=node_info["bc_rotational"],
+            )
+            boundary_conditions.append(node_bc)
+            if node_info.get("P"):
+                node_load = NodalLoad(node=node, force=node_info["P"])
+                nodal_loads.append(node_load)
+            spring_supports.extend(self.create_springs(node_info, node))
 
         element_loads = []
         for element in mesh.elements:
