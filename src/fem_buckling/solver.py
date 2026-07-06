@@ -1,0 +1,70 @@
+import numpy as np
+
+from src.fem_buckling.assembler import PartitionedSystem
+from src.fem_buckling.model_builder import Model
+from src.fem_buckling.result import AxialResults, ReactionForce
+
+
+class AxialSolver:
+    def __init__(self, model: Model, partitioned_system: PartitionedSystem):
+        self.model = model
+        self.partitioned_system = partitioned_system
+        self.node_dofs_mapping = self.map_node_dofs()
+
+    def map_node_dofs(self):
+        dof_mapping = {}
+        for i, node in enumerate(self.model.mesh.nodes):
+            dof_mapping[node.id] = i
+        return dof_mapping
+
+    def solve_displacements(self):
+        K_ff = self.partitioned_system.K_ff
+        f_f = self.partitioned_system.f_f
+
+        return np.linalg.solve(K_ff, f_f)
+
+    def solve_reaction_forces(self, u_f: np.ndarray):
+        K_cf = self.partitioned_system.K_cf
+        K_cc = self.partitioned_system.K_cc
+        f_c = self.partitioned_system.f_c
+
+        u_c = np.zeros(len(self.partitioned_system.constrained_dofs))
+        R_c = K_cf @ u_f + K_cc @ u_c - f_c
+
+        return R_c
+
+    def solve(self):
+        nodes = self.model.mesh.nodes
+        elements = self.model.mesh.elements
+
+        displacements = np.zeros(len(nodes))
+        free_dofs = self.partitioned_system.free_dofs
+        constrained_dofs = self.partitioned_system.constrained_dofs
+
+        u_f = self.solve_displacements()
+        displacements[np.ix_(free_dofs)] = u_f
+
+        r_c = self.solve_reaction_forces(u_f)
+        reaction_forces = []
+        for dof in constrained_dofs:
+            node = next(
+                node for node in nodes if self.node_dofs_mapping[node.id] == dof
+            )
+            force = r_c[dof]
+            reaction_force = ReactionForce(node=node, force=force)
+            reaction_forces.append(reaction_force)
+
+        axial_forces = []
+        for element in elements:
+            node_1, node_2 = element.nodes
+            dof_1 = self.node_dofs_mapping[node_1.id]
+            dof_2 = self.node_dofs_mapping[node_2.id]
+            u_element = np.array([displacements[dof_1], displacements[dof_2]])
+            axial_force = element.calculate_axial_force(u_element)
+            axial_forces.append(axial_force)
+
+        return AxialResults(
+            axial_displacements=displacements,
+            reaction_forces=reaction_forces,
+            axial_forces=axial_forces,
+        )
