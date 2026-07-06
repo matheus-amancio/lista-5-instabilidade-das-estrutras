@@ -46,17 +46,14 @@ class ModelBuilder:
         extreme_segment_nodes = []
         for i, seg_info in enumerate(segments_info):
             x0 = 0.0 if i == 0 else mesh.nodes[-1].x
-            node_coords = generate_node_coordinates(
+            segment_node_coords = generate_node_coordinates(
                 seg_info, x0=x0, offset=1 if i > 0 else 0
             )
-            print(f"{node_coords=}")
             segment_nodes = []
-            for x in node_coords:
+            for x in segment_node_coords:
                 segment_nodes.append(mesh.add_node(x))
             if i == 0:
                 extreme_segment_nodes.append(segment_nodes[0])
-            extreme_segment_nodes.append(segment_nodes[-1])
-
             segment_props = ElementProperties(
                 EA=seg_info["EA"],
                 EI=seg_info["EI"],
@@ -65,6 +62,13 @@ class ModelBuilder:
                 kr=seg_info["kr"],
                 p=seg_info["p"],
             )
+            if i > 0:
+                mesh.add_element(
+                    nodes=(extreme_segment_nodes[-1], segment_nodes[0]),
+                    props=segment_props,
+                )
+            extreme_segment_nodes.append(segment_nodes[-1])
+
             for j in range(len(segment_nodes) - 1):
                 mesh.add_element(
                     nodes=(segment_nodes[j], segment_nodes[j + 1]),
@@ -109,3 +113,5 @@ class Model:
     def __init__(self, mesh: Mesh, load_case: LoadCase):
         self.mesh = mesh
         self.load_case = load_case
+        self.num_nodes = self.mesh.compute_num_nodes()
+        self.num_elements = self.mesh.compute_num_elements()
