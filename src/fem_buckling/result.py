@@ -223,7 +223,7 @@ class ResultsWriter:
         table.field_names = [
             "ID",
             "L",
-            "Num. Elements",
+            "Num. de Elementos",
             "EA",
             "EI",
             "kl",
@@ -250,10 +250,10 @@ class ResultsWriter:
     def write_axial_displacements_table(self):
         table = PrettyTable()
         table.field_names = [
-            "Node ID",
+            "Nó ID",
             "X",
-            "Axial Displacement",
-            "Residual/Reaction Force",
+            "Deslocamento Axial",
+            "Força Residual/Reação",
         ]
         for i, node in enumerate(self.model.mesh.nodes):
             axial_displacement = self.axial_results.axial_displacements[i]
@@ -278,12 +278,12 @@ class ResultsWriter:
     def write_axial_forces_table(self):
         table = PrettyTable()
         table.field_names = [
-            "Element ID",
-            "Segment ID",
-            "Node 1 ID",
-            "Node 2 ID",
+            "Elemento ID",
+            "Segmento ID",
+            "Nó 1 ID",
+            "Nó 2 ID",
             "X_ref",
-            "Axial Force",
+            "Força Axial",
         ]
         for axial_force in self.axial_results.axial_forces:
             element = axial_force.element
