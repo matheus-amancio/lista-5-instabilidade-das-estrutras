@@ -117,6 +117,22 @@ class AxialResults:
         )
 
 
+@dataclass(frozen=True)
+class BucklingMode:
+    mode_number: int
+    buckling_load: float
+    mode_shape: np.ndarray
+
+
+class BucklingResults:
+    def __init__(
+        self, model: Model, num_modes: int, buckling_modes: list[BucklingMode]
+    ):
+        self.model = model
+        self.num_modes = num_modes
+        self.buckling_modes = buckling_modes
+
+
 class ResultsWriter:
     def __init__(
         self,
