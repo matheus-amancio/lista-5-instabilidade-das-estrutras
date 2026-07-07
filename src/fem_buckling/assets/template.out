@@ -1,0 +1,22 @@
+# Arquivo de entrada: {{ input_file_name }}
+
+# Data de execução: {{ execution_date }}
+
+# Convenção de sinais:
+- Cargas axiais no sentido da esquerda pra direita são consideradas positivas.
+- Esforços normais positivos representam tração.
+- Deslocamentos axiais no sentido da esquerda para direita são considerados positivos.
+- Deslocamentos transversais no sentido de baixo para cima são considerados positivos.
+- Rotações no sentido anti-horário são consideradas positivas.
+
+# Dados dos nós
+{{ table_nodes }}
+
+# Dados dos trechos
+{{ table_segments }}
+
+# Trajetória fundamental axial de referência
+{{ table_axial_displacements }}
+
+# Esforços normais de referência
+{{ table_axial_forces }}

@@ -2,7 +2,7 @@ import numpy as np
 
 from src.fem_buckling.assembler import PartitionedSystem
 from src.fem_buckling.model_builder import Model
-from src.fem_buckling.result import AxialResults, ReactionForce
+from src.fem_buckling.result import AxialForce, AxialResults, ReactionForce
 
 
 class AxialSolver:
@@ -61,7 +61,7 @@ class AxialSolver:
             dof_2 = self.node_dofs_mapping[node_2.id]
             u_element = np.array([displacements[dof_1], displacements[dof_2]])
             axial_force = element.calculate_axial_force(u_element)
-            axial_forces.append(axial_force)
+            axial_forces.append(AxialForce(element=element, force=axial_force))
 
         return AxialResults(
             axial_displacements=displacements,

@@ -22,15 +22,30 @@ class ElementProperties:
     p: float
 
 
+@dataclass(frozen=True)
+class SegmentProperties:
+    L: float
+    ne: int
+    EA: float
+    EI: float
+    kl: float
+    kt: float
+    kr: float
+    p: float
+
+
 class Element:
-    def __init__(self, id: int, nodes: tuple[Node], props: ElementProperties):
+    def __init__(
+        self, id: int, nodes: tuple[Node], props: ElementProperties, segment_idx: int
+    ):
         self.id = id
         self.nodes = nodes
         self.props = props
+        self.segment_idx = segment_idx
         self.length = abs(nodes[1].x - nodes[0].x)
 
     def __repr__(self):
-        return f"Element(id={self.id}, node1_id={self.nodes[0].id}, node2_id={self.nodes[1].id})"
+        return f"Element(id={self.id}, node1_id={self.nodes[0].id}, node2_id={self.nodes[1].id}, segment_idx={self.segment_idx})"
 
     def calculate_axial_stiffness_matrix(self) -> np.ndarray:
         EA, L, kl = self.props.EA, self.length, self.props.kl
@@ -44,10 +59,21 @@ class Element:
         return EA / L * (u_j - u_i)
 
 
+class Segment:
+    def __init__(self, id: int, extreme_nodes: tuple[Node], props: SegmentProperties):
+        self.id = id
+        self.extreme_nodes = extreme_nodes
+        self.props = props
+
+    def __repr__(self):
+        return f"Segment(id={self.id}, node1_id={self.extreme_nodes[0].id}, node2_id={self.extreme_nodes[1].id})"
+
+
 class Mesh:
     def __init__(self):
         self.nodes: list[Node] = []
         self.elements: list[Element] = []
+        self.segments: list[Segment] = []
 
         self.reset_counters()
 
@@ -57,11 +83,21 @@ class Mesh:
         self.node_id_counter += 1
         return node
 
-    def add_element(self, nodes: tuple[Node], props: ElementProperties) -> Element:
-        element = Element(self.element_id_counter, nodes, props)
+    def add_element(
+        self, nodes: tuple[Node], props: ElementProperties, segment_idx: int
+    ) -> Element:
+        element = Element(self.element_id_counter, nodes, props, segment_idx)
         self.elements.append(element)
         self.element_id_counter += 1
         return element
+
+    def add_segment(
+        self, extreme_nodes: tuple[Node], props: SegmentProperties
+    ) -> Segment:
+        segment = Segment(self.segment_id_counter, extreme_nodes, props)
+        self.segments.append(segment)
+        self.segment_id_counter += 1
+        return segment
 
     def compute_num_nodes(self):
         return len(self.nodes)
@@ -69,6 +105,10 @@ class Mesh:
     def compute_num_elements(self):
         return len(self.elements)
 
+    def compute_num_segments(self):
+        return len(self.segments)
+
     def reset_counters(self):
         self.node_id_counter = 1
         self.element_id_counter = 1
+        self.segment_id_counter = 1

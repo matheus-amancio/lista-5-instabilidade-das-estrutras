@@ -6,6 +6,7 @@ import typer
 from src.fem_buckling.assembler import AxialAssembler
 from src.fem_buckling.model_builder import ModelBuilder
 from src.fem_buckling.parser import InputReader
+from src.fem_buckling.result import ResultsWriter
 from src.fem_buckling.solver import AxialSolver
 
 logging.basicConfig(
@@ -29,9 +30,10 @@ def run_analysis(path: str = typer.Argument(..., help="Path to the input file"))
     axial_system = axial_assembler.get_partitioned_system()
     axial_solver = AxialSolver(model, axial_system)
     axial_result = axial_solver.solve()
-    print(f"Axial Displacements: {axial_result.axial_displacements}")
-    print(f"Reaction Forces: {axial_result.reaction_forces}")
-    print(f"Axial Forces: {axial_result.axial_forces}")
+
+    results_writer = ResultsWriter(Path(path), input_data, model, axial_result)
+    results_writer.get_formatted_results()
+    results_writer.save()
 
 
 if __name__ == "__main__":

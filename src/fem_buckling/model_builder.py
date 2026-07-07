@@ -8,7 +8,7 @@ from src.fem_buckling.boundary_condition import (
     SpringDirection,
     SpringSupport,
 )
-from src.fem_buckling.mesh import ElementProperties, Mesh, Node
+from src.fem_buckling.mesh import ElementProperties, Mesh, Node, SegmentProperties
 
 
 def generate_node_coordinates(
@@ -66,6 +66,7 @@ class ModelBuilder:
                 mesh.add_element(
                     nodes=(extreme_segment_nodes[-1], segment_nodes[0]),
                     props=segment_props,
+                    segment_idx=i,
                 )
             extreme_segment_nodes.append(segment_nodes[-1])
 
@@ -73,7 +74,24 @@ class ModelBuilder:
                 mesh.add_element(
                     nodes=(segment_nodes[j], segment_nodes[j + 1]),
                     props=segment_props,
+                    segment_idx=i,
                 )
+
+        for i, seg_info in enumerate(segments_info):
+            seg_props = SegmentProperties(
+                L=seg_info["L"],
+                ne=seg_info["num_elements"],
+                EA=seg_info["EA"],
+                EI=seg_info["EI"],
+                kl=seg_info["kl"],
+                kt=seg_info["kt"],
+                kr=seg_info["kr"],
+                p=seg_info["p"],
+            )
+            mesh.add_segment(
+                extreme_nodes=(extreme_segment_nodes[i], extreme_segment_nodes[i + 1]),
+                props=seg_props,
+            )
 
         boundary_conditions = []
         nodal_loads = []
@@ -115,3 +133,4 @@ class Model:
         self.load_case = load_case
         self.num_nodes = self.mesh.compute_num_nodes()
         self.num_elements = self.mesh.compute_num_elements()
+        self.num_segments = self.mesh.compute_num_segments()
