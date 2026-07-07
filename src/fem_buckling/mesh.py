@@ -58,6 +58,60 @@ class Element:
         u_j, u_i = u_element[1], u_element[0]
         return EA / L * (u_j - u_i)
 
+    def calculate_transverse_stiffness_matrix(self) -> np.ndarray:
+        EI, L, kt, kr = self.props.EI, self.length, self.props.kt, self.props.kr
+        return (
+            EI
+            / L**3
+            * np.array(
+                [
+                    [12, 6 * L, -12, 6 * L],
+                    [6 * L, 4 * L**2, -6 * L, 2 * L**2],
+                    [-12, -6 * L, 12, -6 * L],
+                    [6 * L, 2 * L**2, -6 * L, 4 * L**2],
+                ]
+            )
+            + kt
+            * L
+            / 420
+            * np.array(
+                [
+                    [156, 22 * L, 54, -13 * L],
+                    [22 * L, 4 * L**2, 13 * L, -3 * L**2],
+                    [54, 13 * L, 156, -22 * L],
+                    [-13 * L, -3 * L**2, -22 * L, 4 * L**2],
+                ]
+            )
+            + kr
+            / (30 * L)
+            * np.array(
+                [
+                    [36, 3 * L, -36, 3 * L],
+                    [3 * L, 4 * L**2, -3 * L, -(L**2)],
+                    [-36, -3 * L, 36, -3 * L],
+                    [3 * L, -(L**2), -3 * L, 4 * L**2],
+                ]
+            )
+        )
+
+    def calculate_geometric_stiffness_matrix(
+        self, axial_reference_force_positive_in_compression: float
+    ) -> np.ndarray:
+        L = self.length
+        N = axial_reference_force_positive_in_compression
+        return (
+            N
+            / (30 * L)
+            * np.array(
+                [
+                    [36, 3 * L, -36, 3 * L],
+                    [3 * L, 4 * L**2, -3 * L, -(L**2)],
+                    [-36, -3 * L, 36, -3 * L],
+                    [3 * L, -(L**2), -3 * L, 4 * L**2],
+                ]
+            )
+        )
+
 
 class Segment:
     def __init__(self, id: int, extreme_nodes: tuple[Node], props: SegmentProperties):
