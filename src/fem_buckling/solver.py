@@ -1,8 +1,15 @@
 import numpy as np
+from scipy.linalg import eigh
 
-from src.fem_buckling.assembler import PartitionedSystem
+from src.fem_buckling.assembler import PartitionedBucklingSystem, PartitionedSystem
 from src.fem_buckling.model_builder import Model
-from src.fem_buckling.result import AxialForce, AxialResults, ReactionForce
+from src.fem_buckling.result import (
+    AxialForce,
+    AxialResults,
+    BucklingMode,
+    BucklingResults,
+    ReactionForce,
+)
 
 
 class AxialSolver:
@@ -68,4 +75,39 @@ class AxialSolver:
             axial_displacements=displacements,
             reaction_forces=reaction_forces,
             axial_forces=axial_forces,
+        )
+
+
+class BucklingSolver:
+    def __init__(self, model: Model, partitioned_system: PartitionedBucklingSystem):
+        self.model = model
+        self.partitioned_system = partitioned_system
+        self.node_dofs_mapping = self.map_node_dofs()
+
+    def map_node_dofs(self):
+        dof_mapping = {}
+        for i, node in enumerate(self.model.mesh.nodes):
+            dof_mapping[node.id] = (2 * i, 2 * i + 1)
+        return dof_mapping
+
+    def solve(self, num_modes: int):
+        K_ff = self.partitioned_system.K_ff
+        Kg_ff = self.partitioned_system.Kg_ff
+
+        eigenvalues, eigenvectors = eigh(
+            Kg_ff, K_ff, subset_by_index=[0, num_modes - 1]
+        )
+
+        buckling_modes = []
+        for k in range(num_modes):
+            d = np.zeros(len(self.model.mesh.nodes) * 2)
+            d[np.ix_(self.partitioned_system.free_dofs)] = eigenvectors[:, k]
+            buckling_modes.append(
+                BucklingMode(
+                    mode_number=k + 1, buckling_load=eigenvalues[k], mode_shape=d
+                )
+            )
+
+        return BucklingResults(
+            model=self.model, num_modes=num_modes, buckling_modes=buckling_modes
         )
