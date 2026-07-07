@@ -30,6 +30,7 @@ def run_analysis(path: str = typer.Argument(..., help="Path to the input file"))
     axial_system = axial_assembler.get_partitioned_system()
     axial_solver = AxialSolver(model, axial_system)
     axial_result = axial_solver.solve()
+    axial_result.plot_results(Path(path))
 
     results_writer = ResultsWriter(Path(path), input_data, model, axial_result)
     results_writer.get_formatted_results()

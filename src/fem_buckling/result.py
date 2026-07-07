@@ -3,8 +3,10 @@ from datetime import datetime
 from pathlib import Path
 
 import numpy as np
+import plotly.graph_objects as go
 import pytz
 from jinja2 import Template
+from plotly.subplots import make_subplots
 from prettytable import PrettyTable
 
 from src.fem_buckling.boundary_condition import BoundaryConditionType, SpringDirection
@@ -40,13 +42,79 @@ class AxialForce:
 class AxialResults:
     def __init__(
         self,
+        model: Model,
         axial_displacements: np.ndarray,
         reaction_forces: list[ReactionForce],
         axial_forces: list[AxialForce],
     ):
+        self.model = model
+        self.nodes = model.mesh.nodes
+        self.elements = model.mesh.elements
         self.axial_displacements = axial_displacements
         self.reaction_forces = reaction_forces
         self.axial_forces = axial_forces
+
+    def plot_results(
+        self,
+        input_file_path: Path,
+    ):
+        plot_file_path = input_file_path.with_suffix(".html").with_name(
+            f"{input_file_path.stem}_axial_results.html"
+        )
+        fig = make_subplots(
+            2,
+            1,
+            shared_xaxes=True,
+            vertical_spacing=0.1,
+            subplot_titles=("Axial Displacements", "Axial Forces"),
+            x_title="X Coordinate",
+        )
+
+        fig.add_trace(
+            go.Scatter(
+                x=[node.x for node in self.nodes],
+                y=self.axial_displacements,
+                mode="lines",
+                showlegend=False,
+            ),
+            row=1,
+            col=1,
+        )
+
+        for element, axial_force in zip(self.elements, self.axial_forces):
+            x_coords = [element.nodes[0].x, element.nodes[1].x]
+            y_coords = [axial_force.force, axial_force.force]
+            fig.add_trace(
+                go.Scatter(
+                    x=x_coords,
+                    y=y_coords,
+                    mode="lines",
+                    showlegend=False,
+                    line=dict(color="red"),
+                ),
+                row=2,
+                col=1,
+            )
+
+        fig.update_layout(
+            template="plotly_white",
+            title="Axial Displacements and Axial Forces",
+            yaxis_title="Axial Displacement",
+            yaxis2_title="Axial Force",
+            yaxis2=dict(
+                range=[
+                    min(min(af.force for af in self.axial_forces) * 1.1, 0.0),
+                    max(0.0, max(af.force for af in self.axial_forces) * 1.1),
+                ]
+            ),
+        )
+
+        fig.write_html(
+            plot_file_path,
+            auto_open=True,
+            config={"scrollZoom": True},
+            include_plotlyjs=True,
+        )
 
 
 class ResultsWriter:

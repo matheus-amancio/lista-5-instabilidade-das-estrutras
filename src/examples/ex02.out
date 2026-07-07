@@ -9,6 +9,8 @@
 - Deslocamentos transversais no sentido de baixo para cima são considerados positivos.
 - Rotações no sentido anti-horário são consideradas positivas.
 
+# Observação: os resultados axiais correspondem ao carregamento de referência.
+
 # Dados dos nós
 +----+-------+-------------+---------------+--------------+------------+----+----+---------+
 | ID |   X   | Glib. Axial | Glib. Transv. | Glib. Rotat. |     KL     | KT | KR | P axial |

@@ -64,6 +64,7 @@ class AxialSolver:
             axial_forces.append(AxialForce(element=element, force=axial_force))
 
         return AxialResults(
+            model=self.model,
             axial_displacements=displacements,
             reaction_forces=reaction_forces,
             axial_forces=axial_forces,
