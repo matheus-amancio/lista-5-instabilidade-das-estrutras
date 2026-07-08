@@ -112,6 +112,19 @@ class Element:
             )
         )
 
+    def transverse_shape_functions(self, x: float) -> np.ndarray:
+        L = self.length
+        xi = x / L
+        N1 = 1 - 3 * xi**2 + 2 * xi**3
+        N2 = L * (xi - 2 * xi**2 + xi**3)
+        N3 = 3 * xi**2 - 2 * xi**3
+        N4 = L * (-(xi**2) + xi**3)
+        return np.array([N1, N2, N3, N4])
+
+    def transverse_displacement(self, x: float, u_element: np.ndarray) -> float:
+        N = self.transverse_shape_functions(x)
+        return N @ u_element
+
 
 class Segment:
     def __init__(self, id: int, extreme_nodes: tuple[Node], props: SegmentProperties):
