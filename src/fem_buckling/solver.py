@@ -102,7 +102,7 @@ class BucklingSolver:
         for k in range(num_modes):
             mode_shape = np.zeros(len(self.model.mesh.nodes) * 2)
             mode_shape[np.ix_(self.partitioned_system.free_dofs)] = eigenvectors[:, k]
-            mode_shape = mode_shape / np.max(np.abs(mode_shape))
+            mode_shape = mode_shape / np.max(np.abs(mode_shape[::2]))
             buckling_modes.append(
                 BucklingMode(
                     mode_number=k + 1,
