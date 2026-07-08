@@ -11,7 +11,37 @@
             "program": "${workspaceFolder}/main.py",
             "console": "integratedTerminal",
             "args": [
+                "examples/ex02/ex02.ie"
+            ]
+        },
+        {
+            "name": "Run ex01",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "console": "integratedTerminal",
+            "args": [
                 "examples/ex01/ex01.ie"
+            ]
+        },
+        {
+            "name": "Run ex02",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "examples/ex02/ex02.ie"
+            ]
+        },
+        {
+            "name": "Run ex03",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "examples/ex03/ex03.ie"
             ]
         }
     ]
