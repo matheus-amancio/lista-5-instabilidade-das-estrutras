@@ -19,11 +19,11 @@ def get_date_now():
     return datetime.now(tz).strftime("%d/%m/%Y")
 
 
-def format_float(value, signed=False, precision=3):
+def format_float(value, signed=False, precision=6):
     if isinstance(value, float):
         if signed:
-            return f"{value:+.{precision}f}"
-        return f"{value:.{precision}f}"
+            return f"{value:+.{precision}E}"
+        return f"{value:.{precision}E}"
     return value
 
 
@@ -66,16 +66,20 @@ class AxialResults:
             1,
             shared_xaxes=True,
             vertical_spacing=0.1,
-            subplot_titles=("Axial Displacements", "Axial Forces"),
-            x_title="X Coordinate",
+            subplot_titles=(
+                "Deslocamento axial",
+                "Esforço normal (positivo em tração)",
+            ),
+            x_title="Coordenada X",
         )
 
         fig.add_trace(
             go.Scatter(
                 x=[node.x for node in self.nodes],
                 y=self.axial_displacements,
-                mode="lines",
+                mode="markers+lines",
                 showlegend=False,
+                name="Deslocamento axial",
             ),
             row=1,
             col=1,
@@ -88,9 +92,10 @@ class AxialResults:
                 go.Scatter(
                     x=x_coords,
                     y=y_coords,
-                    mode="lines",
+                    mode="markers+lines",
                     showlegend=False,
                     line=dict(color="red"),
+                    name="Esforço normal",
                 ),
                 row=2,
                 col=1,
@@ -98,7 +103,6 @@ class AxialResults:
 
         fig.update_layout(
             template="plotly_white",
-            title="Axial Displacements and Axial Forces",
             yaxis_title="Axial Displacement",
             yaxis2_title="Axial Force",
             yaxis2=dict(
@@ -107,6 +111,11 @@ class AxialResults:
                     max(0.0, max(af.force for af in self.axial_forces) * 1.1),
                 ]
             ),
+        )
+        fig.update_yaxes(exponentformat="e", showexponent="all", row=1, col=1)
+
+        fig.update_traces(
+            hovertemplate="x=%{x}<br>y=%{y:.3e}<extra></extra>", row=1, col=1
         )
 
         fig.write_html(
@@ -120,7 +129,7 @@ class AxialResults:
 @dataclass(frozen=True)
 class BucklingMode:
     mode_number: int
-    buckling_load: float
+    lambda_cr: float
     mode_shape: np.ndarray
 
 
@@ -140,11 +149,13 @@ class ResultsWriter:
         input_data: dict,
         model: Model,
         axial_results: AxialResults,
+        buckling_results: BucklingResults,
     ):
         self.input_file_path = input_file_path
         self.output_file_name = input_file_path.with_suffix(".out")
         self.model = model
         self.axial_results = axial_results
+        self.buckling_results = buckling_results
         self.input_data = input_data
         self.output_file_content = dict()
         self.template_path = Path(__file__).parent / "assets" / "template.out"
@@ -155,6 +166,7 @@ class ResultsWriter:
         self.write_segment_table()
         self.write_axial_displacements_table()
         self.write_axial_forces_table()
+        self.write_modes()
 
     def write_info(self, key, value):
         self.output_file_content[key] = value
@@ -279,7 +291,7 @@ class ResultsWriter:
         table = PrettyTable()
         table.field_names = [
             "Elemento ID",
-            "Segmento ID",
+            "Trecho ID",
             "Nó 1 ID",
             "Nó 2 ID",
             "X_ref",
@@ -299,9 +311,42 @@ class ResultsWriter:
             )
         self.write_info("table_axial_forces", table.get_string())
 
+    def map_buckling_node_dofs(self):
+        dof_mapping = {}
+        for i, node in enumerate(self.model.mesh.nodes):
+            dof_mapping[node.id] = (2 * i, 2 * i + 1)
+        return dof_mapping
+
+    def write_modes(self):
+        nodes = self.model.mesh.nodes
+        dof_mapping = self.map_buckling_node_dofs()
+        buckling_modes_data = []
+        for mode in self.buckling_results.buckling_modes:
+            mode_info = {
+                "number": mode.mode_number,
+                "lambda_cr": format_float(mode.lambda_cr),
+            }
+            table = PrettyTable()
+            table.field_names = ["Nó ID", "X", "v", "theta"]
+            for node in nodes:
+                dof_v, dof_theta = dof_mapping[node.id]
+                v = mode.mode_shape[dof_v]
+                theta = mode.mode_shape[dof_theta]
+                table.add_row(
+                    [
+                        node.id,
+                        format_float(node.x),
+                        format_float(v, signed=True),
+                        format_float(theta, signed=True),
+                    ]
+                )
+            mode_info["table"] = table.get_string()
+            buckling_modes_data.append(mode_info)
+        self.write_info("buckling_modes", buckling_modes_data)
+
     def save(self):
-        with open(self.template_path, "r") as template_file:
+        with open(self.template_path, "r", encoding="utf-8") as template_file:
             template_content = Template(template_file.read())
         output_content = template_content.render(self.output_file_content)
-        with open(self.output_file_name, "w") as output_file:
+        with open(self.output_file_name, "w", encoding="utf-8") as output_file:
             output_file.write(output_content)

@@ -22,3 +22,10 @@
 
 # Esforços normais de referência
 {{ table_axial_forces }}
+
+# Modos de flambagem
+{% for mode in buckling_modes %}
+## Modo {{ mode.number }}
+lambda_cr = {{ mode.lambda_cr }}
+{{ mode.table }}
+{% endfor %}
