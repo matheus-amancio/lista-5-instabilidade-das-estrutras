@@ -95,16 +95,17 @@ class BucklingSolver:
         Kg_ff = self.partitioned_system.Kg_ff
 
         eigenvalues, eigenvectors = eigh(
-            Kg_ff, K_ff, subset_by_index=[0, num_modes - 1]
+            K_ff, Kg_ff, subset_by_index=[0, num_modes - 1]
         )
 
         buckling_modes = []
         for k in range(num_modes):
-            d = np.zeros(len(self.model.mesh.nodes) * 2)
-            d[np.ix_(self.partitioned_system.free_dofs)] = eigenvectors[:, k]
+            mode_shape = np.zeros(len(self.model.mesh.nodes) * 2)
+            mode_shape[np.ix_(self.partitioned_system.free_dofs)] = eigenvectors[:, k]
+            mode_shape = mode_shape / np.max(np.abs(mode_shape))
             buckling_modes.append(
                 BucklingMode(
-                    mode_number=k + 1, buckling_load=eigenvalues[k], mode_shape=d
+                    mode_number=k + 1, lambda_cr=eigenvalues[k], mode_shape=mode_shape
                 )
             )
 
