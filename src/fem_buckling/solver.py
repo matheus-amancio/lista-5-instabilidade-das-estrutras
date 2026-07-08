@@ -90,7 +90,7 @@ class BucklingSolver:
             dof_mapping[node.id] = (2 * i, 2 * i + 1)
         return dof_mapping
 
-    def solve(self, num_modes: int):
+    def solve(self, num_modes: int) -> BucklingResults:
         K_ff = self.partitioned_system.K_ff
         Kg_ff = self.partitioned_system.Kg_ff
 
@@ -105,7 +105,10 @@ class BucklingSolver:
             mode_shape = mode_shape / np.max(np.abs(mode_shape))
             buckling_modes.append(
                 BucklingMode(
-                    mode_number=k + 1, lambda_cr=eigenvalues[k], mode_shape=mode_shape
+                    mode_number=k + 1,
+                    lambda_cr=eigenvalues[k],
+                    mode_shape=mode_shape,
+                    node_dofs_mapping=self.node_dofs_mapping,
                 )
             )
 

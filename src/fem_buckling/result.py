@@ -131,6 +131,7 @@ class BucklingMode:
     mode_number: int
     lambda_cr: float
     mode_shape: np.ndarray
+    node_dofs_mapping: dict[int, tuple[int, int]]
 
 
 class BucklingResults:
@@ -140,6 +141,79 @@ class BucklingResults:
         self.model = model
         self.num_modes = num_modes
         self.buckling_modes = buckling_modes
+
+    def plot_mode_shapes(self, input_file_path: Path):
+        elements = self.model.mesh.elements
+        for mode in self.buckling_modes:
+            plot_file_path = input_file_path.with_suffix(".html").with_name(
+                f"{input_file_path.stem}_buckling_mode_{mode.mode_number}.html"
+            )
+            x = []
+            y = []
+            element_x_extreme_points = []
+            element_y_extreme_points = []
+            for element in elements:
+                node_1, node_2 = element.nodes
+                dofs_node_1 = mode.node_dofs_mapping[node_1.id]
+                dofs_node_2 = mode.node_dofs_mapping[node_2.id]
+                mode_displacements = np.array(
+                    [
+                        mode.mode_shape[dofs_node_1[0]],
+                        mode.mode_shape[dofs_node_1[1]],
+                        mode.mode_shape[dofs_node_2[0]],
+                        mode.mode_shape[dofs_node_2[1]],
+                    ]
+                )
+                x_local_range = np.linspace(0, element.length, 100)
+                x_global_range = np.linspace(node_1.x, node_2.x, 100)
+                transverse_displacements = []
+                for x_k in x_local_range:
+                    transverse_displacements.append(
+                        element.transverse_displacement(x_k, mode_displacements)
+                    )
+                x.extend(x_global_range)
+                y.extend(transverse_displacements)
+                element_x_extreme_points.extend([node_1.x, node_2.x])
+                element_y_extreme_points.extend(
+                    [transverse_displacements[0], transverse_displacements[-1]]
+                )
+            fig = go.Figure()
+            fig.add_trace(
+                go.Scatter(
+                    x=x,
+                    y=y,
+                    mode="lines",
+                    name=f"Modo {mode.mode_number}",
+                )
+            )
+
+            fig.update_layout(
+                template="plotly_white",
+                title=f"Modo de flambagem {mode.mode_number} (λ_cr = {mode.lambda_cr:.3e})",
+                xaxis_title="Coordenada X",
+                yaxis_title="Deslocamento Transversal",
+            )
+
+            fig.update_yaxes(exponentformat="e", showexponent="all")
+
+            fig.update_traces(hovertemplate="x=%{x}<br>y=%{y:.3e}<extra></extra>")
+
+            fig.add_trace(
+                go.Scatter(
+                    x=element_x_extreme_points,
+                    y=element_y_extreme_points,
+                    mode="markers",
+                    name="Nós",
+                    marker=dict(color="red", size=8),
+                )
+            )
+
+            fig.write_html(
+                plot_file_path,
+                auto_open=True,
+                config={"scrollZoom": True},
+                include_plotlyjs=True,
+            )
 
 
 class ResultsWriter:
