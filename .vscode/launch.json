@@ -11,7 +11,7 @@
             "program": "${workspaceFolder}/main.py",
             "console": "integratedTerminal",
             "args": [
-                "src/examples/ex02.ie"
+                "examples/ex01/ex01.ie"
             ]
         }
     ]
