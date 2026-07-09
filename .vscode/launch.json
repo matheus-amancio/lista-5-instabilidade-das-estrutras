@@ -43,6 +43,16 @@
             "args": [
                 "examples/ex03/ex03.ie"
             ]
+        },
+        {
+            "name": "Run ex04",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "examples/ex04/ex04.ie"
+            ]
         }
     ]
 }
