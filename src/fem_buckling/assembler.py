@@ -202,15 +202,13 @@ class BucklingAssembler:
         all_dofs = np.array(
             [dof for node in self.nodes for dof in self.node_dofs_mapping[node.id]]
         )
-        constrained_dofs = np.array(
-            [
-                dof
-                for bc in self.boundary_conditions
-                for dof in self.node_dofs_mapping[bc.node.id]
-                if (bc.bc_transverse == BoundaryConditionType.FIXED)
-                or (bc.bc_rotational == BoundaryConditionType.FIXED)
-            ]
-        )
+        constrained_dofs = []
+        for bc in self.boundary_conditions:
+            node_dofs = self.node_dofs_mapping[bc.node.id]
+            if bc.bc_transverse == BoundaryConditionType.FIXED:
+                constrained_dofs.append(node_dofs[0])
+            if bc.bc_rotational == BoundaryConditionType.FIXED:
+                constrained_dofs.append(node_dofs[1])
 
         if len(constrained_dofs) == 0:
             raise ValueError("Nenhum GDL restrito encontrado.")
