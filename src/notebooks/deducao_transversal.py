@@ -9,8 +9,8 @@ def _():
     import sympy as sp
 
     # Variáveis simbólicas
-    x, L = sp.symbols("x L", positive=True)
-    EI, kt, kr, N0 = sp.symbols("EI kt kr N0")
+    x, L, EI = sp.symbols("x L EI", positive=True)
+    kt, kr, N0 = sp.symbols("kt kr N0")
 
     # Coordenada adimensional
     xi = x / L
@@ -58,7 +58,6 @@ def _():
     Kt = sp.simplify(Kt)
     Kr = sp.simplify(Kr)
     Kg = sp.simplify(Kg)
-
     return EI, Ke, Kg, Kr, Kt, L, N0, kr, kt, sp
 
 
